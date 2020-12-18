@@ -27,6 +27,7 @@ from utilities.forms import (
     NumericArrayField, SelectWithPK, SmallTextarea, SlugField, StaticSelect2, StaticSelect2Multiple, TagFilterField,
     BOOLEAN_WITH_BLANK_CHOICES,
 )
+from utilities.utils import union_list
 from virtualization.models import Cluster, ClusterGroup
 from .choices import *
 from .constants import *
@@ -1910,6 +1911,18 @@ class DeviceForm(BootstrapMixin, TenancyForm, CustomFieldModelForm):
             elif self.initial.get('rack') and str(self.initial.get('face')):
                 position_choices = Rack.objects.get(pk=self.initial['rack']) \
                     .get_rack_units(face=self.initial.get('face'), exclude=pk)
+            elif self.is_bound and self.data.get('rack'):
+                front = Rack.objects.get(pk=self.data['rack']) \
+                    .get_rack_units(face=DeviceFaceChoices.FACE_FRONT, exclude=pk)
+                rear = Rack.objects.get(pk=self.data['rack']) \
+                    .get_rack_units(face=DeviceFaceChoices.FACE_REAR, exclude=pk)
+                position_choices = union_list(front, rear, 'name')
+            elif self.initial.get('rack'):
+                front = Rack.objects.get(pk=self.initial['rack']) \
+                    .get_rack_units(face=DeviceFaceChoices.FACE_FRONT, exclude=pk)
+                rear = Rack.objects.get(pk=self.initial['rack']) \
+                    .get_rack_units(face=DeviceFaceChoices.FACE_REAR, exclude=pk)
+                position_choices = union_list(front, rear, 'name')
             else:
                 position_choices = []
         except Rack.DoesNotExist:

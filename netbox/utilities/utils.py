@@ -83,6 +83,30 @@ def count_related(model, field):
     return Coalesce(subquery, 0)
 
 
+def intersect_list(llist, rlist, key):
+    result = []
+    for left in llist:
+        for right in rlist:
+            if isinstance(left, dict) and isinstance(right, dict) and key in left.keys() and key in right.keys() and \
+                    left[key] == right[key]:
+                result.append(left)
+                break
+    return result
+
+
+def union_list(llist, rlist, key):
+    result = llist
+    for right in rlist:
+        found = False
+        for left in llist:
+            if isinstance(left, dict) and isinstance(right, dict) and key in left.keys() and key in right.keys() and \
+                    left[key] == right[key]:
+                found = True
+        if found is False:
+            result.append(right)
+    return result
+
+
 def serialize_object(obj, extra=None, exclude=None):
     """
     Return a generic JSON representation of an object using Django's built-in serializer. (This is used for things like
