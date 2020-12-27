@@ -5,6 +5,40 @@
 cd "$(dirname "$0")"
 VIRTUALENV="$(pwd -P)/venv"
 
+# If PYTHON hasn't been set by the user perform auto-detection
+if [ -z "$PYTHON" ]; then
+  TRY_VERSIONS="
+    /usr/local/bin/python3.9
+    /usr/bin/python3.9
+    /usr/local/bin/python3.8
+    /usr/bin/python3.8
+    /usr/local/bin/python3.7
+    /usr/bin/python3.7
+    /usr/local/bin/python3.6
+    /usr/bin/python3.6
+    /usr/local/bin/python3
+    /usr/bin/python3
+  "
+
+  for python in $TRY_VERSIONS; do
+    if [ -x "$python" ] && $python -c "import sys; import venv; sys.exit(0 if sys.version_info >= (3,6) else 1)"; then
+      PYTHON="$python"
+      break
+    fi
+  done
+
+  if [ -z "$PYTHON" ]; then
+    echo "--------------------------------------------------------------------"
+    echo "ERROR: Failed to find a supported Python interpreter. Python 3.6 or"
+    echo "higher is required. Check that you have the required system packages"
+    echo "installed."
+    echo "--------------------------------------------------------------------"
+    exit 1
+  else
+    echo "Using $PYTHON"
+  fi
+fi
+
 # Remove the existing virtual environment (if any)
 if [ -d "$VIRTUALENV" ]; then
   COMMAND="rm -rf ${VIRTUALENV}"
@@ -15,7 +49,7 @@ else
 fi
 
 # Create a new virtual environment
-COMMAND="/usr/bin/python3 -m venv ${VIRTUALENV}"
+COMMAND="$PYTHON -m venv ${VIRTUALENV}"
 echo "Creating a new virtual environment at ${VIRTUALENV}..."
 eval $COMMAND || {
   echo "--------------------------------------------------------------------"
